@@ -1,3 +1,0 @@
-# Cloudflare Pages SPA Routing fallback
-# Direct all unmatched routes to index.html with HTTP status 200
-/*    /index.html   200
