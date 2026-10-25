@@ -18,7 +18,7 @@ export default {
     // Proxy API calls directly to VPS backend on Lightsail using sslip.io FQDN
     if (url.pathname.startsWith('/api') || url.pathname === '/health') {
       // Use domain name to comply with Cloudflare Workers subrequest rules (raw IP returns Error 1003)
-      const backendBase = env.BACKEND_URL || 'http://13.232.230.172.sslip.io:5000';
+      const backendBase = env.BACKEND_URL || 'http://16.4.87.135.sslip.io:5000';
       const targetUrl = new URL(url.pathname + url.search, backendBase);
 
       const headers = new Headers(request.headers);

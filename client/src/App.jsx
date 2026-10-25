@@ -20,8 +20,8 @@ export function App() {
       database: 'CONNECTED',
       killSwitch: 'INACTIVE',
       egressIp: {
-        currentOutboundIp: '13.232.230.172',
-        registeredStaticIp: '13.232.230.172',
+        currentOutboundIp: '16.4.87.135',
+        registeredStaticIp: '16.4.87.135',
         isIpMatching: true
       }
     }
@@ -151,7 +151,7 @@ export function App() {
     if (isLive && !isApiOk) {
       throw new Error(
         apiResponse?.message ||
-        'AWS VPS (13.232.230.172:5000) unreachable. Please open Port 5000 in AWS Lightsail IPv4 Firewall rules.'
+        'AWS VPS (16.4.87.135:5000) unreachable. Please open Port 5000 in AWS Lightsail IPv4 Firewall rules.'
       );
     }
 
@@ -315,7 +315,7 @@ export function App() {
                     <strong>Spec:</strong> AWS Lightsail Ubuntu 2GB RAM (~$12 / ₹1,137/mo).
                   </div>
                   <div style={{ marginBottom: '8px' }}>
-                    <strong>Static IP:</strong> {health.checks.egressIp?.registeredStaticIp || '13.232.230.172'} (Attached in Angel One portal).
+                    <strong>Static IP:</strong> {health.checks.egressIp?.registeredStaticIp || '16.4.87.135'} (Attached in Angel One portal).
                   </div>
                   <div>
                     <strong>Runtime:</strong> PM2 managing isolated worker + Express REST API behind Nginx SSL.

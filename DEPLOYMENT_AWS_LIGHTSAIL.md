@@ -8,7 +8,7 @@ This guide walks you through deploying TradePilot on an **AWS Lightsail Ubuntu V
 
 ```
  [ Cloudflare Pages ]                            [ AWS Lightsail VPS (Mumbai - ap-south-1) ]
- React Frontend Dashboard                        Dedicated Static IPv4: 13.232.230.172
+ React Frontend Dashboard                        Dedicated Static IPv4: 16.4.87.135
           │                                      ┌──────────────────────────────────────────────┐
           │ (HTTPS /api requests)                │ PM2 Process Manager                          │
           ▼                                      │                                              │
@@ -40,7 +40,7 @@ This guide walks you through deploying TradePilot on an **AWS Lightsail Ubuntu V
 3. Once the instance is running:
    - Go to the **Networking** tab.
    - Click **Create static IP** and attach it to your instance.
-   - Note down your **Static IPv4** (e.g. `13.232.230.172`).
+   - Note down your **Static IPv4** (e.g. `16.4.87.135`).
 4. In the Lightsail **IPv4 Firewall** section:
    - Click **Add rule** > Custom > TCP > Port **`5000`** (Allow all).
    - Also allow Port **`80`** (HTTP) and **`443`** (HTTPS) if using Nginx.
@@ -87,7 +87,7 @@ CLIENT_URL=https://algo.klaba8086.workers.dev
 MONGODB_URI=mongodb+srv://laba:3roTOiPmQAHFZRrE@cluster0.l173t.mongodb.net/tradepilot?retryWrites=true&w=majority
 
 # Set your actual Lightsail static IP:
-REGISTERED_STATIC_IP=13.232.230.172
+REGISTERED_STATIC_IP=16.4.87.135
 ENFORCE_STATIC_IP_CHECK=true
 
 # Angel One Credentials:
@@ -115,8 +115,8 @@ Expected output:
 ------------------------------------------------------
  TradePilot Static IP Egress Verification Tool
 ------------------------------------------------------
-Detected Outbound IPv4 : 13.232.230.172
-Configured Static IP   : 13.232.230.172
+Detected Outbound IPv4 : 16.4.87.135
+Configured Static IP   : 16.4.87.135
  STATUS: MATCH! Egress IP matches your registered SmartAPI IP.
 ```
 
@@ -151,7 +151,7 @@ You should see:
 
 1. Go to your **Cloudflare Pages** dashboard.
 2. In your Project Settings > **Environment variables**:
-   - `VITE_API_URL` = `http://13.232.230.172:5000` *(or `https://api.yourdomain.com` if using a custom domain)*.
+   - `VITE_API_URL` = `http://16.4.87.135:5000` *(or `https://api.yourdomain.com` if using a custom domain)*.
 3. Trigger a redeploy. Your Cloudflare frontend is now live and communicating directly with your AWS Lightsail static IP backend!
 
 ---

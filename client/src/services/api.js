@@ -122,7 +122,7 @@ export const api = {
       return {
         success: false,
         error: 'VPS_UNREACHABLE',
-        message: 'Could not reach VPS at 13.232.230.172:5000. Ensure Port 5000 is open in AWS Lightsail IPv4 Firewall.'
+        message: 'Could not reach VPS at 16.4.87.135:5000. Ensure Port 5000 is open in AWS Lightsail IPv4 Firewall.'
       };
     }
   },
