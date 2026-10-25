@@ -6,46 +6,51 @@ import { smartApiClient } from '../services/smartapi/smartApiClient.js';
  */
 export async function getHoldings(req, res) {
   try {
-    const result = await smartApiClient.getAllHoldings();
+    // 1. Fetch Demat stocks from primary getHolding endpoint
+    const rawResult = await smartApiClient.getHoldings();
+    let holdings = [];
 
-    if (!result.success) {
-      // Fallback to individual holdings endpoint
-      const rawHoldings = await smartApiClient.getHoldings();
-      if (rawHoldings.success && Array.isArray(rawHoldings.data) && rawHoldings.data.length > 0) {
-        let totalVal = 0;
-        let totalInv = 0;
-        rawHoldings.data.forEach(h => {
-          totalVal += (h.quantity || 0) * (h.ltp || h.close || 0);
-          totalInv += (h.quantity || 0) * (h.averageprice || 0);
-        });
-        const totalPnl = totalVal - totalInv;
-        const totalPnlPct = totalInv > 0 ? (totalPnl / totalInv) * 100 : 0;
-
-        return res.json({
-          success: true,
-          data: {
-            holdings: rawHoldings.data,
-            totalholding: {
-              totalholdingvalue: parseFloat(totalVal.toFixed(2)),
-              totalinvvalue: parseFloat(totalInv.toFixed(2)),
-              totalprofitandloss: parseFloat(totalPnl.toFixed(2)),
-              totalpnlpercentage: parseFloat(totalPnlPct.toFixed(2))
-            }
-          }
+    if (rawResult.success && Array.isArray(rawResult.data) && rawResult.data.length > 0) {
+      holdings = rawResult.data;
+    } else {
+      // 2. If getHoldings is empty, try getAllHoldings
+      const allResult = await smartApiClient.getAllHoldings();
+      if (allResult.success && allResult.data?.holdings && allResult.data.holdings.length > 0) {
+        holdings = allResult.data.holdings;
+      } else if (!rawResult.success && !allResult.success) {
+        return res.status(400).json({
+          success: false,
+          message: rawResult.error || allResult.error || 'Could not fetch holdings from Angel One SmartAPI',
+          error: rawResult.error || allResult.error
         });
       }
-
-      // If broker returned an error (e.g. auth failure or API block), report it accurately
-      return res.status(400).json({
-        success: false,
-        message: result.message || rawHoldings.message || 'Could not fetch holdings from Angel One SmartAPI',
-        error: result.error || rawHoldings.error
-      });
     }
+
+    // 3. Compute portfolio summary totals
+    let totalVal = 0;
+    let totalInv = 0;
+    holdings.forEach(h => {
+      const qty = Number(h.quantity || h.realisedquantity || 0) + Number(h.t1quantity || 0);
+      const ltp = Number(h.ltp || h.close || 0);
+      const avg = Number(h.averageprice || 0);
+      totalVal += qty * ltp;
+      totalInv += qty * avg;
+    });
+
+    const totalPnl = totalVal - totalInv;
+    const totalPnlPct = totalInv > 0 ? (totalPnl / totalInv) * 100 : 0;
 
     return res.json({
       success: true,
-      data: result.data
+      data: {
+        holdings,
+        totalholding: {
+          totalholdingvalue: parseFloat(totalVal.toFixed(2)),
+          totalinvvalue: parseFloat(totalInv.toFixed(2)),
+          totalprofitandloss: parseFloat(totalPnl.toFixed(2)),
+          totalpnlpercentage: parseFloat(totalPnlPct.toFixed(2))
+        }
+      }
     });
   } catch (error) {
     console.error('[PortfolioController] getHoldings error:', error.message);

@@ -303,6 +303,7 @@ export class SmartApiClient {
 
     try {
       const publicIp = await this.getOutboundIp();
+      console.log(`[SmartAPI] Fetching /portfolio/v1/getAllHolding via IP: ${publicIp}...`);
       const response = await axios.get(
         `${this.baseUrl}/rest/secure/angelbroking/portfolio/v1/getAllHolding`,
         {
@@ -313,12 +314,15 @@ export class SmartApiClient {
             'X-SourceID': 'WEB',
             'X-ClientLocalIP': '127.0.0.1',
             'X-ClientPublicIP': publicIp,
+            'X-MACAddress': 'fe80::1',
             'X-PrivateKey': config.smartApi.apiKey,
             'Authorization': `Bearer ${this.jwtToken}`
           },
-          timeout: 7000
+          timeout: 8000
         }
       );
+
+      console.log('[SmartAPI] getAllHolding status:', response.data?.status, 'message:', response.data?.message);
 
       return {
         success: response.data?.status || false,
@@ -326,8 +330,8 @@ export class SmartApiClient {
         data: response.data?.data || { holdings: [], totalholding: null }
       };
     } catch (err) {
-      console.error('[SmartAPI] getAllHoldings error:', err.message);
-      return { success: false, error: err.message, data: { holdings: [], totalholding: null } };
+      console.error('[SmartAPI] getAllHoldings error:', err.response?.data || err.message);
+      return { success: false, error: err.response?.data?.message || err.message, data: { holdings: [], totalholding: null } };
     }
   }
 
@@ -341,6 +345,7 @@ export class SmartApiClient {
 
     try {
       const publicIp = await this.getOutboundIp();
+      console.log(`[SmartAPI] Fetching /portfolio/v1/getHolding via IP: ${publicIp}...`);
       const response = await axios.get(
         `${this.baseUrl}/rest/secure/angelbroking/portfolio/v1/getHolding`,
         {
@@ -351,21 +356,30 @@ export class SmartApiClient {
             'X-SourceID': 'WEB',
             'X-ClientLocalIP': '127.0.0.1',
             'X-ClientPublicIP': publicIp,
+            'X-MACAddress': 'fe80::1',
             'X-PrivateKey': config.smartApi.apiKey,
             'Authorization': `Bearer ${this.jwtToken}`
           },
-          timeout: 7000
+          timeout: 8000
         }
       );
 
+      console.log('[SmartAPI] getHolding status:', response.data?.status, 'count:', Array.isArray(response.data?.data) ? response.data.data.length : 'non-array');
+
+      const holdingsArray = Array.isArray(response.data?.data)
+        ? response.data.data
+        : Array.isArray(response.data)
+        ? response.data
+        : [];
+
       return {
-        success: response.data?.status || false,
+        success: response.data?.status || (holdingsArray.length > 0),
         message: response.data?.message || 'SUCCESS',
-        data: response.data?.data || []
+        data: holdingsArray
       };
     } catch (err) {
-      console.error('[SmartAPI] getHoldings error:', err.message);
-      return { success: false, error: err.message, data: [] };
+      console.error('[SmartAPI] getHoldings error:', err.response?.data || err.message);
+      return { success: false, error: err.response?.data?.message || err.message, data: [] };
     }
   }
 
