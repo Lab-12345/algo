@@ -13,9 +13,11 @@ export function HoldingsPortfolio() {
   const [convertQuantity, setConvertQuantity] = useState(1);
   const [conversionStatus, setConversionStatus] = useState(null);
   const [isConverting, setIsConverting] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchHoldings = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await api.getHoldings();
       if (res.success && res.data) {
@@ -23,10 +25,12 @@ export function HoldingsPortfolio() {
           holdings: res.data.holdings || [],
           totalholding: res.data.totalholding || null
         });
+        setLastUpdated(new Date().toLocaleTimeString('en-IN'));
+      } else {
+        setError(res.message || 'Could not fetch holdings from Angel One SmartAPI');
       }
-      setLastUpdated(new Date().toLocaleTimeString('en-IN'));
     } catch (err) {
-      console.error('Failed to load holdings:', err);
+      setError(err.message || 'Failed to load portfolio holdings');
     } finally {
       setLoading(false);
     }
@@ -131,6 +135,28 @@ export function HoldingsPortfolio() {
           {loading ? 'Syncing...' : '🔄 Sync Demat'}
         </button>
       </div>
+
+      {/* Error / Connection Notice Banner */}
+      {error && (
+        <div style={{
+          margin: '16px 20px 0',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          background: 'rgba(239, 68, 68, 0.15)',
+          border: '1px solid var(--accent-crimson)',
+          color: 'var(--accent-crimson)',
+          fontSize: '0.85rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          lineHeight: '1.4'
+        }}>
+          <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+          <div>
+            <strong>Broker Notice:</strong> {error}
+          </div>
+        </div>
+      )}
 
       {/* Portfolio Summary Metric Cards */}
       <div style={{

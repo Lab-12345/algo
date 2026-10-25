@@ -163,14 +163,15 @@ export const api = {
   async getHoldings() {
     try {
       const res = await fetch(`${BASE_URL}/portfolio/holdings`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+      const data = await res.json();
+      return data;
     } catch (e) {
       return {
         success: false,
+        message: 'Connection failed: ' + e.message,
         data: {
           holdings: [],
-          totalholding: { totalholdingvalue: 0, totalinvvalue: 0, totalprofitandloss: 0, totalpnlpercentage: 0 }
+          totalholding: null
         }
       };
     }

@@ -8,10 +8,10 @@ export async function getHoldings(req, res) {
   try {
     const result = await smartApiClient.getAllHoldings();
 
-    if (!result.success && !result.data?.holdings) {
-      // Fallback to individual holdings or empty default
+    if (!result.success) {
+      // Fallback to individual holdings endpoint
       const rawHoldings = await smartApiClient.getHoldings();
-      if (rawHoldings.success && Array.isArray(rawHoldings.data)) {
+      if (rawHoldings.success && Array.isArray(rawHoldings.data) && rawHoldings.data.length > 0) {
         let totalVal = 0;
         let totalInv = 0;
         rawHoldings.data.forEach(h => {
@@ -35,17 +35,11 @@ export async function getHoldings(req, res) {
         });
       }
 
-      return res.json({
-        success: true,
-        data: {
-          holdings: [],
-          totalholding: {
-            totalholdingvalue: 0,
-            totalinvvalue: 0,
-            totalprofitandloss: 0,
-            totalpnlpercentage: 0
-          }
-        }
+      // If broker returned an error (e.g. auth failure or API block), report it accurately
+      return res.status(400).json({
+        success: false,
+        message: result.message || rawHoldings.message || 'Could not fetch holdings from Angel One SmartAPI',
+        error: result.error || rawHoldings.error
       });
     }
 
