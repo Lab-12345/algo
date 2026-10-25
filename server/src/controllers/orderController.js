@@ -49,6 +49,8 @@ export async function reconcileBrokerPositions(req, res) {
   }
 }
 
+import { config } from '../config/env.js';
+
 export async function placeManualOrder(req, res) {
   try {
     const {
@@ -66,48 +68,123 @@ export async function placeManualOrder(req, res) {
     const parsedPrice = parseFloat(price) || 150.0;
     const parsedQty = parseInt(quantity, 10) || 25;
 
+    // Check LIVE mode safety guards
+    if (tradingMode === 'LIVE') {
+      if (!config.allowLiveTrading) {
+        return res.status(403).json({
+          success: false,
+          error: 'LIVE_TRADING_DISABLED',
+          message: 'LIVE trading is disabled in VPS configuration (ALLOW_LIVE_TRADING=false in .env). Enable ALLOW_LIVE_TRADING=true in .env to place real orders with Angel One.'
+        });
+      }
+
+      // Attempt live broker submission via Angel One SmartAPI
+      try {
+        const brokerResult = await smartApiClient.placeOrder({
+          variety: 'NORMAL',
+          tradingsymbol: symbol || 'NIFTY24OCT24500CE',
+          symboltoken: instrumentToken || '99926000',
+          transactiontype: side,
+          exchange: 'NFO',
+          ordertype: orderType || 'LIMIT',
+          producttype: 'INTRADAY',
+          price: parsedPrice,
+          quantity: parsedQty
+        });
+
+        if (!brokerResult.success) {
+          return res.status(400).json({
+            success: false,
+            error: 'BROKER_REJECTED',
+            message: brokerResult.data?.message || 'Angel One broker rejected order. Note: Indian markets (NSE/NFO) are closed outside 9:15 AM - 3:30 PM IST Monday-Friday.'
+          });
+        }
+
+        const liveOrder = await Order.create({
+          clientOrderId: `TP_LIVE_${Date.now()}_${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+          brokerOrderId: brokerResult.orderid,
+          tradingMode: 'LIVE',
+          symbol: symbol || 'NIFTY24OCT24500CE',
+          transactionType: side,
+          orderType,
+          price: parsedPrice,
+          quantity: parsedQty,
+          status: 'FULLY_FILLED',
+          filledQuantity: parsedQty,
+          averagePrice: parsedPrice,
+          filledAt: new Date(),
+          submittedAt: new Date()
+        });
+
+        const livePosition = await Position.create({
+          tradingMode: 'LIVE',
+          symbol: symbol || 'NIFTY24OCT24500CE',
+          instrumentToken: instrumentToken || '99926000',
+          side: side === 'BUY' ? 'LONG' : 'SHORT',
+          quantity: parsedQty,
+          entryPrice: parsedPrice,
+          currentPrice: parsedPrice,
+          unrealizedPnl: 0,
+          stopLossPrice: stopLossPrice ? parseFloat(stopLossPrice) : parsedPrice - 25,
+          targetPrice: targetPrice ? parseFloat(targetPrice) : parsedPrice + 50,
+          openOrderId: liveOrder._id,
+          status: 'OPEN'
+        });
+
+        return res.status(201).json({
+          success: true,
+          message: `LIVE order placed on Angel One (Broker ID: ${brokerResult.orderid})`,
+          data: { order: liveOrder, position: livePosition }
+        });
+      } catch (brokerErr) {
+        return res.status(400).json({
+          success: false,
+          error: 'BROKER_ERROR',
+          message: `Angel One API error: ${brokerErr.message}. Indian markets are closed outside 9:15 AM - 3:30 PM IST.`
+        });
+      }
+    }
+
+    // PAPER mode execution
     const order = await Order.create({
       clientOrderId: `TP_MANUAL_${Date.now()}_${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-      tradingMode,
+      tradingMode: 'PAPER',
       symbol: symbol || 'NIFTY24OCT24500CE',
       transactionType: side,
       orderType,
       price: parsedPrice,
       quantity: parsedQty,
-      status: tradingMode === 'PAPER' ? 'FULLY_FILLED' : 'PENDING_SUBMISSION',
-      filledQuantity: tradingMode === 'PAPER' ? parsedQty : 0,
+      status: 'FULLY_FILLED',
+      filledQuantity: parsedQty,
       averagePrice: parsedPrice,
-      filledAt: tradingMode === 'PAPER' ? new Date() : null,
+      filledAt: new Date(),
       submittedAt: new Date()
     });
 
-    let position = null;
-    if (tradingMode === 'PAPER') {
-      position = await Position.create({
-        tradingMode: 'PAPER',
-        symbol: symbol || 'NIFTY24OCT24500CE',
-        instrumentToken: instrumentToken || '99926000',
-        side: side === 'BUY' ? 'LONG' : 'SHORT',
-        quantity: parsedQty,
-        entryPrice: parsedPrice,
-        currentPrice: parsedPrice,
-        unrealizedPnl: 0,
-        stopLossPrice: stopLossPrice ? parseFloat(stopLossPrice) : parsedPrice - 25,
-        targetPrice: targetPrice ? parseFloat(targetPrice) : parsedPrice + 50,
-        openOrderId: order._id,
-        status: 'OPEN'
-      });
-    }
+    const position = await Position.create({
+      tradingMode: 'PAPER',
+      symbol: symbol || 'NIFTY24OCT24500CE',
+      instrumentToken: instrumentToken || '99926000',
+      side: side === 'BUY' ? 'LONG' : 'SHORT',
+      quantity: parsedQty,
+      entryPrice: parsedPrice,
+      currentPrice: parsedPrice,
+      unrealizedPnl: 0,
+      stopLossPrice: stopLossPrice ? parseFloat(stopLossPrice) : parsedPrice - 25,
+      targetPrice: targetPrice ? parseFloat(targetPrice) : parsedPrice + 50,
+      openOrderId: order._id,
+      status: 'OPEN'
+    });
 
     await AuditLog.create({
       action: 'MANUAL_ORDER_PLACED',
       actor: 'OPERATOR',
-      details: { orderId: order._id, symbol, mode: tradingMode, price: parsedPrice, quantity: parsedQty }
+      details: { orderId: order._id, symbol, mode: 'PAPER', price: parsedPrice, quantity: parsedQty }
     });
 
     return res.status(201).json({
       success: true,
-      message: `${tradingMode} order executed successfully`,
+      message: `PAPER order executed successfully`,
       data: { order, position }
     });
   } catch (error) {
