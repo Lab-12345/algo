@@ -13,9 +13,9 @@ node_modules/
 *.key
 
 # Build outputs
-client/dist/
+# client/dist/ is tracked for direct Cloudflare deployment
 client/build/
-dist/
+/dist/
 build/
 
 # Logs
