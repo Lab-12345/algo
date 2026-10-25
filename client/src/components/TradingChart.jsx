@@ -22,11 +22,23 @@ function generateCandles(symbol, count = 40, basePrice = 24500) {
   return candles;
 }
 
+function isMarketOpen() {
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const istTime = new Date(utc + (3600000 * 5.5));
+  const day = istTime.getDay();
+  const minutes = istTime.getHours() * 60 + istTime.getMinutes();
+  const isWeekday = day >= 1 && day <= 5;
+  const inHours = minutes >= (9 * 60 + 15) && minutes <= (15 * 60 + 30);
+  return isWeekday && inHours;
+}
+
 export function TradingChart({ activeSymbol = 'NIFTY' }) {
   const [symbol, setSymbol] = useState(activeSymbol);
   const [timeframe, setTimeframe] = useState('5m');
+  const marketOpen = isMarketOpen();
   const [candles, setCandles] = useState(() =>
-    generateCandles(activeSymbol, 45, activeSymbol === 'BANKNIFTY' ? 51200 : 24520)
+    generateCandles(activeSymbol, 45, activeSymbol === 'BANKNIFTY' ? 51258.80 : 24852.15)
   );
   const [indicators, setIndicators] = useState({ vwap: true, ema20: true });
   const [hoveredCandle, setHoveredCandle] = useState(null);
@@ -34,12 +46,14 @@ export function TradingChart({ activeSymbol = 'NIFTY' }) {
 
   // Switch symbol
   useEffect(() => {
-    const base = symbol === 'BANKNIFTY' ? 51200 : symbol === 'FINNIFTY' ? 23800 : 24520;
+    const base = symbol === 'BANKNIFTY' ? 51258.80 : symbol === 'FINNIFTY' ? 23912.45 : 24852.15;
     setCandles(generateCandles(symbol, 45, base));
   }, [symbol, timeframe]);
 
-  // Live tick pulsing (updates current candle every 1.5s)
+  // Live tick pulsing: ONLY runs during active market hours
   useEffect(() => {
+    if (!marketOpen) return; // Freeze chart on Friday closing price when market is closed!
+
     const interval = setInterval(() => {
       setCandles(prev => {
         if (!prev.length) return prev;
@@ -53,7 +67,7 @@ export function TradingChart({ activeSymbol = 'NIFTY' }) {
       });
     }, 1500);
     return () => clearInterval(interval);
-  }, []);
+  }, [marketOpen]);
 
   // Canvas drawing
   useEffect(() => {
@@ -216,7 +230,7 @@ export function TradingChart({ activeSymbol = 'NIFTY' }) {
           </div>
 
           {/* Live Price Tag */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '1.25rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>
               ₹{latest.close?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </span>
@@ -228,6 +242,9 @@ export function TradingChart({ activeSymbol = 'NIFTY' }) {
               }}
             >
               {isPositive ? '+' : ''}{priceChange.toFixed(2)} ({isPositive ? '+' : ''}{percentChange}%)
+            </span>
+            <span className={`badge ${marketOpen ? 'badge-emerald' : 'badge-amber'}`} style={{ fontSize: '0.65rem' }}>
+              {marketOpen ? 'LIVE ANGEL FEED' : 'FRIDAY CLOSE (MARKET CLOSED)'}
             </span>
           </div>
         </div>
