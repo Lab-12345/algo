@@ -15,7 +15,7 @@ const orderSchema = new mongoose.Schema({
   strategyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Strategy',
-    required: true
+    required: false
   },
   signalId: {
     type: mongoose.Schema.Types.ObjectId,

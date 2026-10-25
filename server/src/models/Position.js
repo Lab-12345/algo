@@ -4,7 +4,7 @@ const positionSchema = new mongoose.Schema({
   strategyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Strategy',
-    required: true
+    required: false
   },
   tradingMode: {
     type: String,
