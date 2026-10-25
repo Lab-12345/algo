@@ -17,6 +17,9 @@
     "build": "npm --workspace=client run build",
     "test": "npm --workspace=server test"
   },
+  "dependencies": {
+    "vite": "^6.0.0"
+  },
   "keywords": [
     "trading",
     "smartapi",
