@@ -17,7 +17,7 @@ export default {
 
     // Proxy API calls directly to Cloudflare Tunnel connected to VPS
     if (url.pathname.startsWith('/api') || url.pathname === '/health') {
-      const backendBase = env.BACKEND_URL || 'https://province-pcs-life-fitted.trycloudflare.com';
+      const backendBase = env.BACKEND_URL || 'https://pressure-caught-specifics-desired.trycloudflare.com';
       const targetUrl = new URL(url.pathname + url.search, backendBase);
 
       const headers = new Headers(request.headers);
