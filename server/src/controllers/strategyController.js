@@ -111,3 +111,22 @@ export async function disableStrategy(req, res) {
     return res.status(500).json({ success: false, message: error.message });
   }
 }
+
+export async function deleteStrategy(req, res) {
+  try {
+    const strategy = await Strategy.findByIdAndDelete(req.params.id);
+    if (!strategy) {
+      return res.status(404).json({ success: false, message: 'Strategy not found' });
+    }
+
+    await AuditLog.create({
+      action: 'STRATEGY_DELETED',
+      actor: req.user?.email || 'API',
+      details: { strategyId: req.params.id, name: strategy.name }
+    });
+
+    return res.json({ success: true, message: 'Strategy removed successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}

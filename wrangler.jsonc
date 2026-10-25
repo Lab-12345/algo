@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "algo",
+  "main": "worker.js",
   "compatibility_date": "2026-10-25",
   "assets": {
     "directory": "./client/dist",

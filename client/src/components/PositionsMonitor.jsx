@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function PositionsMonitor({ positions = [] }) {
+export function PositionsMonitor({ positions = [], onClosePosition }) {
   return (
     <div className="card" style={{ marginBottom: '24px' }}>
       <div className="card-header">
@@ -14,7 +14,7 @@ export function PositionsMonitor({ positions = [] }) {
       <div className="table-wrapper">
         {positions.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-dim)', fontSize: '0.875rem' }}>
-            No open positions currently. System is standing by for new strategy signals.
+            No open positions currently. System is standing by for new strategy signals or manual trades.
           </div>
         ) : (
           <table>
@@ -29,6 +29,7 @@ export function PositionsMonitor({ positions = [] }) {
                 <th>Stop Loss</th>
                 <th>Target</th>
                 <th>Unrealized P&L</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -60,6 +61,28 @@ export function PositionsMonitor({ positions = [] }) {
                     </td>
                     <td className={`mono-text ${isPnlPositive ? 'pnl-positive' : 'pnl-negative'}`} style={{ fontWeight: 700 }}>
                       {isPnlPositive ? '+' : ''}₹{(pos.unrealizedPnl || 0).toFixed(2)}
+                    </td>
+                    <td>
+                      {onClosePosition ? (
+                        <button
+                          className="btn btn-sm btn-ghost"
+                          style={{
+                            fontSize: '0.75rem',
+                            padding: '3px 8px',
+                            color: 'var(--accent-crimson)',
+                            borderColor: 'var(--accent-crimson)'
+                          }}
+                          onClick={() => {
+                            if (window.confirm(`Square off position ${pos.symbol} (${pos.quantity} qty) at market?`)) {
+                              onClosePosition(pos._id);
+                            }
+                          }}
+                        >
+                          Square Off
+                        </button>
+                      ) : (
+                        <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>Auto</span>
+                      )}
                     </td>
                   </tr>
                 );

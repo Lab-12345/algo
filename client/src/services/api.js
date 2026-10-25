@@ -56,6 +56,22 @@ export const api = {
     return await res.json();
   },
 
+  async createStrategy(strategyData) {
+    const res = await fetch(`${BASE_URL}/strategies`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(strategyData)
+    });
+    return await res.json();
+  },
+
+  async deleteStrategy(id) {
+    const res = await fetch(`${BASE_URL}/strategies/${id}`, {
+      method: 'DELETE'
+    });
+    return await res.json();
+  },
+
   // Orders & Positions
   async getOrders() {
     try {
@@ -66,6 +82,15 @@ export const api = {
     }
   },
 
+  async placeManualOrder(orderData) {
+    const res = await fetch(`${BASE_URL}/orders/manual`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderData)
+    });
+    return await res.json();
+  },
+
   async getPositions() {
     try {
       const res = await fetch(`${BASE_URL}/positions`);
@@ -73,6 +98,13 @@ export const api = {
     } catch (e) {
       return { success: false, data: [] };
     }
+  },
+
+  async closePosition(id) {
+    const res = await fetch(`${BASE_URL}/positions/${id}/close`, {
+      method: 'POST'
+    });
+    return await res.json();
   },
 
   // Trades & Performance

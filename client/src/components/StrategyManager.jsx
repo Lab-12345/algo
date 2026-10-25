@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export function StrategyManager({ strategies, onToggleStrategy, onModeChange }) {
+export function StrategyManager({ strategies, onToggleStrategy, onModeChange, onCreateClick, onDeleteStrategy }) {
   const [selectedStrategy, setSelectedStrategy] = useState(null);
 
   return (
@@ -10,7 +10,18 @@ export function StrategyManager({ strategies, onToggleStrategy, onModeChange }) 
           <span>⚡</span>
           <span>Strategy Orchestrator</span>
         </h2>
-        <span className="badge badge-cyan">{strategies.length} Configured</span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span className="badge badge-cyan">{strategies.length} Configured</span>
+          {onCreateClick && (
+            <button
+              className="btn btn-primary"
+              style={{ fontSize: '0.8rem', padding: '6px 12px' }}
+              onClick={onCreateClick}
+            >
+              + Create Strategy
+            </button>
+          )}
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
@@ -35,13 +46,33 @@ export function StrategyManager({ strategies, onToggleStrategy, onModeChange }) 
                     Symbol: <span className="mono-text" style={{ color: 'var(--text-main)', fontWeight: 600 }}>{strat.symbol}</span> (Token: {strat.instrumentToken})
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                   <span className={`badge ${isLive ? 'badge-crimson' : 'badge-emerald'}`}>
                     {strat.tradingMode}
                   </span>
                   <span className={`badge ${isActive ? 'badge-emerald' : 'badge-amber'}`}>
                     {strat.status}
                   </span>
+                  {onDeleteStrategy && (
+                    <button
+                      title="Delete Strategy"
+                      onClick={() => {
+                        if (window.confirm(`Delete strategy "${strat.name}"?`)) {
+                          onDeleteStrategy(strat._id);
+                        }
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--accent-crimson)',
+                        cursor: 'pointer',
+                        padding: '2px 4px',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      🗑️
+                    </button>
+                  )}
                 </div>
               </div>
 
