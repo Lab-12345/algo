@@ -21,6 +21,12 @@ export async function getSystemHealth(req, res) {
     checks: {
       database: dbStatus ? 'CONNECTED' : 'DISCONNECTED',
       killSwitch: killSwitch.isKillSwitchActive ? 'ACTIVE' : 'INACTIVE',
+      broker: {
+        rootEndpoint: config.smartApi.baseUrl,
+        hasApiKey: Boolean(config.smartApi.apiKey),
+        hasClientCode: Boolean(config.smartApi.clientCode),
+        sessionActive: Boolean(smartApiClient.jwtToken)
+      },
       egressIp: {
         currentOutboundIp: outboundIp,
         registeredStaticIp: config.registeredStaticIp || 'NOT_CONFIGURED',
@@ -31,6 +37,15 @@ export async function getSystemHealth(req, res) {
       defaultMode: config.defaultTradingMode
     }
   });
+}
+
+export async function testBrokerAuth(req, res) {
+  try {
+    const loginResult = await smartApiClient.login();
+    return res.json(loginResult);
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
 }
 
 export async function triggerKillSwitch(req, res) {

@@ -1,6 +1,45 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import { config } from '../../config/env.js';
 import { validateOrderCompliance } from '@tradepilot/shared';
+
+/**
+ * Converts a base32 encoded string into a Buffer
+ */
+function base32ToBuffer(base32) {
+  const charTable = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const clean = (base32 || '').toUpperCase().replace(/=+$/, '').replace(/\s+/g, '');
+  let bits = 0;
+  let value = 0;
+  const bytes = [];
+  for (let i = 0; i < clean.length; i++) {
+    const val = charTable.indexOf(clean[i]);
+    if (val === -1) continue;
+    value = (value << 5) | val;
+    bits += 5;
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
+  }
+  return Buffer.from(bytes);
+}
+
+/**
+ * Generates an RFC 6238 6-digit TOTP code using HMAC-SHA1
+ */
+export function generateTOTP(secret) {
+  if (!secret) return '';
+  const key = base32ToBuffer(secret);
+  const epoch = Math.floor(Date.now() / 1000);
+  const counter = Math.floor(epoch / 30);
+  const buf = Buffer.alloc(8);
+  buf.writeBigUInt64BE(BigInt(counter));
+  const hmac = crypto.createHmac('sha1', key).update(buf).digest();
+  const offset = hmac[hmac.length - 1] & 0xf;
+  const code = (hmac.readUInt32BE(offset) & 0x7fffffff) % 1000000;
+  return code.toString().padStart(6, '0');
+}
 
 export class SmartApiClient {
   constructor() {
@@ -43,13 +82,16 @@ export class SmartApiClient {
       return { success: false, message: 'Missing credentials' };
     }
 
+    const resolvedTotp = totp || (config.smartApi.totpKey ? generateTOTP(config.smartApi.totpKey) : '');
+
     try {
+      const publicIp = await this.getOutboundIp();
       const response = await axios.post(
         `${this.baseUrl}/rest/auth/angelbroking/user/v1/loginByPassword`,
         {
           clientcode: clientCode,
           password: password,
-          totp: totp
+          totp: resolvedTotp
         },
         {
           headers: {
@@ -58,7 +100,7 @@ export class SmartApiClient {
             'X-UserType': 'USER',
             'X-SourceID': 'WEB',
             'X-ClientLocalIP': '127.0.0.1',
-            'X-ClientPublicIP': await this.getOutboundIp(),
+            'X-ClientPublicIP': publicIp,
             'X-MACAddress': 'MAC_PLACEHOLDER',
             'X-PrivateKey': config.smartApi.apiKey
           },
@@ -73,13 +115,25 @@ export class SmartApiClient {
         console.log('[SmartAPI] Logged in successfully. Session active.');
         return { success: true, data: response.data.data };
       } else {
-        return { success: false, message: response.data?.message || 'Login failed' };
+        return { success: false, message: response.data?.message || 'Login failed', data: response.data };
       }
     } catch (error) {
       const msg = error.response?.data?.message || error.message;
       console.error(`[SmartAPI] Login error: ${msg}`);
-      return { success: false, message: msg };
+      return { success: false, message: msg, error: error.response?.data };
     }
+  }
+
+  /**
+   * Ensures active session, automatically logging in with TOTP if needed
+   */
+  async ensureAuthenticated() {
+    if (this.jwtToken) return true;
+    if (config.smartApi.clientCode && config.smartApi.apiKey) {
+      const loginRes = await this.login();
+      return loginRes.success;
+    }
+    return false;
   }
 
   /**
@@ -106,9 +160,10 @@ export class SmartApiClient {
       }
     }
 
-    // 3. Broker API Call
+    // 3. Broker API Call - ensure authenticated
+    await this.ensureAuthenticated();
     if (!this.jwtToken) {
-      throw new Error('[SmartAPI] Active broker session token missing. Please authenticate first.');
+      throw new Error('[SmartAPI] Active broker session token missing. Automatic login failed. Please verify API key, Client Code, Password, and TOTP key in .env.');
     }
 
     const payload = {
@@ -155,6 +210,7 @@ export class SmartApiClient {
    * Fetches current order book for reconciliation and status verification
    */
   async getOrderBook() {
+    await this.ensureAuthenticated();
     if (!this.jwtToken) return { success: false, data: [] };
 
     try {
@@ -183,6 +239,7 @@ export class SmartApiClient {
    * Fetches current open positions from broker
    */
   async getPositions() {
+    await this.ensureAuthenticated();
     if (!this.jwtToken) return { success: false, data: [] };
 
     try {
@@ -204,6 +261,35 @@ export class SmartApiClient {
     } catch (err) {
       console.error('[SmartAPI] getPositions error:', err.message);
       return { success: false, error: err.message, data: [] };
+    }
+  }
+
+  /**
+   * Fetches trader profile information from broker
+   */
+  async getProfile() {
+    await this.ensureAuthenticated();
+    if (!this.jwtToken) return { success: false, message: 'Unauthenticated' };
+
+    try {
+      const response = await axios.get(
+        `${this.baseUrl}/rest/secure/angelbroking/user/v1/getProfile`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-UserType': 'USER',
+            'X-SourceID': 'WEB',
+            'X-PrivateKey': config.smartApi.apiKey,
+            'Authorization': `Bearer ${this.jwtToken}`
+          },
+          timeout: 6000
+        }
+      );
+      return { success: response.data?.status || false, data: response.data?.data };
+    } catch (err) {
+      console.error('[SmartAPI] getProfile error:', err.message);
+      return { success: false, error: err.message };
     }
   }
 }
