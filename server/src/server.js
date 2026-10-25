@@ -32,8 +32,8 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow non-browser requests, wildcard mode, local or Cloudflare Pages domains
-    if (!origin || config.clientUrl === '*' || allowedOrigins.includes(origin) || origin.endsWith('.pages.dev')) {
+    // Allow non-browser requests, wildcard mode, local or Cloudflare domains (*.pages.dev, *.workers.dev)
+    if (!origin || config.clientUrl === '*' || allowedOrigins.includes(origin) || origin.endsWith('.pages.dev') || origin.endsWith('.workers.dev')) {
       return callback(null, true);
     }
     return callback(null, true);

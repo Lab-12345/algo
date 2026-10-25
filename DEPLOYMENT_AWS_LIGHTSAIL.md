@@ -83,7 +83,7 @@ nano .env
 ```env
 NODE_ENV=production
 PORT=5000
-CLIENT_URL=*
+CLIENT_URL=https://algo.klaba8086.workers.dev
 MONGODB_URI=mongodb+srv://laba:3roTOiPmQAHFZRrE@cluster0.l173t.mongodb.net/tradepilot?retryWrites=true&w=majority
 
 # Set your actual Lightsail static IP:
