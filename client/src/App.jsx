@@ -41,42 +41,15 @@ export function App() {
     }
   ]);
 
-  const [orders, setOrders] = useState([
-    {
-      _id: 'ord-1',
-      clientOrderId: 'TP_PAPER_M28F90_4A',
-      brokerOrderId: 'SIMULATED',
-      tradingMode: 'PAPER',
-      orderType: 'LIMIT',
-      price: 24520.50,
-      quantity: 25,
-      status: 'FULLY_FILLED',
-      createdAt: new Date(Date.now() - 3600000)
-    }
-  ]);
-
-  const [positions, setPositions] = useState([
-    {
-      _id: 'pos-1',
-      symbol: 'NIFTY24OCT24500CE',
-      tradingMode: 'PAPER',
-      side: 'LONG',
-      quantity: 25,
-      entryPrice: 145.20,
-      currentPrice: 158.40,
-      unrealizedPnl: 330.00,
-      stopLossPrice: 120.00,
-      targetPrice: 195.00
-    }
-  ]);
-
+  const [orders, setOrders] = useState([]);
+  const [positions, setPositions] = useState([]);
   const [tradeMetrics, setTradeMetrics] = useState({
-    totalTrades: 4,
-    winningTrades: 3,
-    losingTrades: 1,
-    winRate: 75,
-    totalNetPnl: 1420.50,
-    totalCharges: 42.00
+    totalTrades: 0,
+    winningTrades: 0,
+    losingTrades: 0,
+    winRate: 0,
+    totalNetPnl: 0.00,
+    totalCharges: 0.00
   });
 
   // Fetch live state periodically from REST API
@@ -91,10 +64,21 @@ export function App() {
       ]);
 
       if (h?.success) setHealth(h);
-      if (s?.success && s.data?.length > 0) setStrategies(s.data);
-      if (o?.success && o.data?.length > 0) setOrders(o.data);
-      if (p?.success && p.data?.length > 0) setPositions(p.data);
-      if (t?.success && t.metrics) setTradeMetrics(t.metrics);
+      if (s?.success) setStrategies(s.data || []);
+      if (o?.success) setOrders(o.data || []);
+      if (p?.success) setPositions(p.data || []);
+      if (t?.success && t.metrics) {
+        setTradeMetrics(t.metrics);
+      } else {
+        setTradeMetrics({
+          totalTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          winRate: 0,
+          totalNetPnl: 0.00,
+          totalCharges: 0.00
+        });
+      }
     } catch (e) {
       // In offline preview, preserve initial UI state
     }

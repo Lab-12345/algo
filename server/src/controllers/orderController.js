@@ -213,3 +213,14 @@ export async function closePosition(req, res) {
     return res.status(500).json({ success: false, message: error.message });
   }
 }
+
+export async function resetAllTestData(req, res) {
+  try {
+    await Position.deleteMany({});
+    await Order.deleteMany({});
+    return res.json({ success: true, message: 'All demo and test positions/orders cleared successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
