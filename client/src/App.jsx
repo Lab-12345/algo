@@ -147,12 +147,10 @@ export function App() {
     const isLive = orderPayload.tradingMode === 'LIVE';
     const isApiOk = apiResponse?.success;
 
-    // In LIVE mode, if the API actually failed to reach the VPS
+    // In LIVE mode, if the broker or API rejected the order
     if (isLive && !isApiOk) {
-      throw new Error(
-        apiResponse?.message ||
-        'AWS VPS (16.4.87.135:5000) unreachable. Please open Port 5000 in AWS Lightsail IPv4 Firewall rules.'
-      );
+      const errorMsg = apiResponse?.message || apiResponse?.error || 'Live order rejected: Indian Stock Exchanges (NSE/NFO) are closed outside 9:15 AM - 3:30 PM IST (Mon-Fri).';
+      throw new Error(errorMsg);
     }
 
     // Add to orders list optimistically

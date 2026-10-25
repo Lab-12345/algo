@@ -122,8 +122,8 @@ export const api = {
     } catch (e) {
       return {
         success: false,
-        error: 'VPS_UNREACHABLE',
-        message: 'Could not reach VPS at 16.4.87.135:5000. Ensure Port 5000 is open in AWS Lightsail IPv4 Firewall.'
+        error: 'NETWORK_ERROR',
+        message: 'Could not reach trading API: ' + e.message
       };
     }
   },
