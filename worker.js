@@ -15,22 +15,29 @@ export default {
       });
     }
 
-    // Proxy API calls directly to VPS backend on Lightsail
+    // Proxy API calls directly to VPS backend on Lightsail using sslip.io FQDN
     if (url.pathname.startsWith('/api') || url.pathname === '/health') {
-      const backendBase = env.BACKEND_URL || 'http://13.232.230.172:5000';
+      // Use domain name to comply with Cloudflare Workers subrequest rules (raw IP returns Error 1003)
+      const backendBase = env.BACKEND_URL || 'http://13.232.230.172.sslip.io:5000';
       const targetUrl = new URL(url.pathname + url.search, backendBase);
 
       const headers = new Headers(request.headers);
-      headers.set('Host', '13.232.230.172:5000');
+      headers.set('Host', new URL(backendBase).host);
       headers.set('X-Forwarded-Proto', 'https');
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 7000);
+
         const response = await fetch(new Request(targetUrl, {
           method: request.method,
           headers,
           body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
-          redirect: 'follow'
+          redirect: 'follow',
+          signal: controller.signal
         }));
+
+        clearTimeout(timeoutId);
 
         const responseHeaders = new Headers(response.headers);
         responseHeaders.set('Access-Control-Allow-Origin', '*');
@@ -46,8 +53,9 @@ export default {
         return new Response(
           JSON.stringify({
             success: false,
-            error: 'Backend Gateway Error',
-            message: `Could not connect to VPS backend at ${backendBase}: ${err.message}`
+            error: 'VPS_GATEWAY_TIMEOUT',
+            message: `Could not connect to VPS backend at ${backendBase}. Please ensure Port 5000 is open in AWS Lightsail IPv4 Firewall rules.`,
+            detail: err.message
           }),
           {
             status: 502,

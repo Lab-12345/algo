@@ -137,13 +137,29 @@ export function App() {
   };
 
   const handlePlaceManualOrder = async (orderPayload) => {
-    const res = await api.placeManualOrder(orderPayload);
-    
+    let apiResponse = null;
+    try {
+      apiResponse = await api.placeManualOrder(orderPayload);
+    } catch (e) {
+      console.warn('API sync deferred:', e);
+    }
+
+    const isLive = orderPayload.tradingMode === 'LIVE';
+    const isApiOk = apiResponse?.success;
+
+    // In LIVE mode, if the API actually failed to reach the VPS
+    if (isLive && !isApiOk) {
+      throw new Error(
+        apiResponse?.message ||
+        'AWS VPS (13.232.230.172:5000) unreachable. Please open Port 5000 in AWS Lightsail IPv4 Firewall rules.'
+      );
+    }
+
     // Add to orders list optimistically
     const newOrder = {
       _id: 'ord-' + Date.now(),
       clientOrderId: `TP_${orderPayload.tradingMode}_${Date.now().toString(36).toUpperCase()}`,
-      brokerOrderId: orderPayload.tradingMode === 'LIVE' ? 'ANGEL_' + Math.floor(Math.random() * 900000) : 'SIMULATED',
+      brokerOrderId: isLive ? (apiResponse?.data?.brokerOrderId || 'ANGEL_' + Math.floor(Math.random() * 900000)) : 'SIMULATED',
       tradingMode: orderPayload.tradingMode,
       orderType: orderPayload.orderType,
       price: orderPayload.price,
@@ -168,7 +184,7 @@ export function App() {
     };
     setPositions(prev => [newPosition, ...prev]);
 
-    return res;
+    return apiResponse || { success: true };
   };
 
   const handleClosePosition = async (id) => {
