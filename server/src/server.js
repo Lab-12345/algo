@@ -21,7 +21,8 @@ const app = express();
 
 // Security and utility middleware
 app.use(helmet({
-  contentSecurityPolicy: false // Allow modern dashboard assets & charts
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 // Configure CORS for Cloudflare Pages, custom domain, and local development
 const allowedOrigins = [

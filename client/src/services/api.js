@@ -1,6 +1,5 @@
-const TUNNEL_URL = 'https://pressure-caught-specifics-desired.trycloudflare.com';
 const RAW_URL = import.meta.env.VITE_API_URL || '';
-const BASE_URL = RAW_URL ? `${RAW_URL.replace(/\/$/, '')}/api` : `${TUNNEL_URL}/api`;
+const BASE_URL = RAW_URL ? `${RAW_URL.replace(/\/$/, '')}/api` : '/api';
 
 export const api = {
   // System Health & Telemetry
