@@ -1,15 +1,17 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const origin = request.headers.get('Origin') || url.origin;
 
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         status: 204,
         headers: {
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': origin,
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Access-Control-Allow-Credentials': 'true',
           'Access-Control-Max-Age': '86400'
         }
       });
@@ -26,7 +28,7 @@ export default {
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
 
         const response = await fetch(new Request(targetUrl, {
           method: request.method,
@@ -39,9 +41,13 @@ export default {
         clearTimeout(timeoutId);
 
         const responseHeaders = new Headers(response.headers);
-        responseHeaders.set('Access-Control-Allow-Origin', '*');
+        responseHeaders.set('Access-Control-Allow-Origin', origin);
         responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        responseHeaders.set('Access-Control-Allow-Credentials', 'true');
+        responseHeaders.delete('cross-origin-opener-policy');
+        responseHeaders.delete('cross-origin-resource-policy');
+        responseHeaders.delete('content-security-policy');
 
         return new Response(response.body, {
           status: response.status,
@@ -59,7 +65,8 @@ export default {
             status: 502,
             headers: {
               'Content-Type': 'application/json',
-              'Access-Control-Allow-Origin': '*'
+              'Access-Control-Allow-Origin': origin,
+              'Access-Control-Allow-Credentials': 'true'
             }
           }
         );
