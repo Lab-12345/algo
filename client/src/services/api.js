@@ -1,5 +1,6 @@
+const TUNNEL_URL = 'https://province-pcs-life-fitted.trycloudflare.com';
 const RAW_URL = import.meta.env.VITE_API_URL || '';
-const BASE_URL = RAW_URL ? `${RAW_URL.replace(/\/$/, '')}/api` : '/api';
+const BASE_URL = RAW_URL ? `${RAW_URL.replace(/\/$/, '')}/api` : `${TUNNEL_URL}/api`;
 
 export const api = {
   // System Health & Telemetry

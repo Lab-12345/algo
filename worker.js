@@ -15,19 +15,18 @@ export default {
       });
     }
 
-    // Proxy API calls directly to VPS backend on Lightsail using sslip.io FQDN
+    // Proxy API calls directly to Cloudflare Tunnel connected to VPS
     if (url.pathname.startsWith('/api') || url.pathname === '/health') {
-      // Use domain name to comply with Cloudflare Workers subrequest rules (raw IP returns Error 1003)
-      const backendBase = env.BACKEND_URL || 'http://16.4.87.135.sslip.io:5000';
+      const backendBase = env.BACKEND_URL || 'https://province-pcs-life-fitted.trycloudflare.com';
       const targetUrl = new URL(url.pathname + url.search, backendBase);
 
       const headers = new Headers(request.headers);
-      headers.set('Host', new URL(backendBase).host);
+      headers.delete('host');
       headers.set('X-Forwarded-Proto', 'https');
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 7000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(new Request(targetUrl, {
           method: request.method,
@@ -53,9 +52,8 @@ export default {
         return new Response(
           JSON.stringify({
             success: false,
-            error: 'VPS_GATEWAY_TIMEOUT',
-            message: `Could not connect to VPS backend at ${backendBase}. Please ensure Port 5000 is open in AWS Lightsail IPv4 Firewall rules.`,
-            detail: err.message
+            error: 'TUNNEL_GATEWAY_ERROR',
+            message: `Could not connect to VPS backend tunnel at ${backendBase}: ${err.message}`
           }),
           {
             status: 502,
