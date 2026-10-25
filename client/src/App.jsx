@@ -8,10 +8,11 @@ import { PositionsMonitor } from './components/PositionsMonitor.jsx';
 import { OrderBook } from './components/OrderBook.jsx';
 import { RiskPanel } from './components/RiskPanel.jsx';
 import { CreateStrategyModal } from './components/CreateStrategyModal.jsx';
+import { HoldingsPortfolio } from './components/HoldingsPortfolio.jsx';
 import { api } from './services/api.js';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState('terminal'); // 'terminal' | 'strategies' | 'orders'
+  const [activeTab, setActiveTab] = useState('terminal'); // 'terminal' | 'strategies' | 'orders' | 'portfolio'
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const [health, setHealth] = useState({
@@ -231,6 +232,13 @@ export function App() {
             <span>📋</span>
             <span>Positions & Risk ({positions.length})</span>
           </button>
+          <button
+            className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`}
+            onClick={() => setActiveTab('portfolio')}
+          >
+            <span>💼</span>
+            <span>Demat Portfolio & Holdings</span>
+          </button>
         </div>
 
         {/* TAB 1: Live Terminal & Chart */}
@@ -305,6 +313,13 @@ export function App() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* TAB 4: Angel One Demat Portfolio & Holdings */}
+        {activeTab === 'portfolio' && (
+          <div>
+            <HoldingsPortfolio />
           </div>
         )}
       </main>

@@ -292,6 +292,140 @@ export class SmartApiClient {
       return { success: false, error: err.message };
     }
   }
+
+  /**
+   * Fetches user holdings with overall total holding portfolio summary
+   * Endpoint: /rest/secure/angelbroking/portfolio/v1/getAllHolding
+   */
+  async getAllHoldings() {
+    await this.ensureAuthenticated();
+    if (!this.jwtToken) return { success: false, message: 'Unauthenticated with broker' };
+
+    try {
+      const publicIp = await this.getOutboundIp();
+      const response = await axios.get(
+        `${this.baseUrl}/rest/secure/angelbroking/portfolio/v1/getAllHolding`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-UserType': 'USER',
+            'X-SourceID': 'WEB',
+            'X-ClientLocalIP': '127.0.0.1',
+            'X-ClientPublicIP': publicIp,
+            'X-PrivateKey': config.smartApi.apiKey,
+            'Authorization': `Bearer ${this.jwtToken}`
+          },
+          timeout: 7000
+        }
+      );
+
+      return {
+        success: response.data?.status || false,
+        message: response.data?.message || 'SUCCESS',
+        data: response.data?.data || { holdings: [], totalholding: null }
+      };
+    } catch (err) {
+      console.error('[SmartAPI] getAllHoldings error:', err.message);
+      return { success: false, error: err.message, data: { holdings: [], totalholding: null } };
+    }
+  }
+
+  /**
+   * Fetches raw Demat stock holdings list
+   * Endpoint: /rest/secure/angelbroking/portfolio/v1/getHolding
+   */
+  async getHoldings() {
+    await this.ensureAuthenticated();
+    if (!this.jwtToken) return { success: false, message: 'Unauthenticated with broker' };
+
+    try {
+      const publicIp = await this.getOutboundIp();
+      const response = await axios.get(
+        `${this.baseUrl}/rest/secure/angelbroking/portfolio/v1/getHolding`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-UserType': 'USER',
+            'X-SourceID': 'WEB',
+            'X-ClientLocalIP': '127.0.0.1',
+            'X-ClientPublicIP': publicIp,
+            'X-PrivateKey': config.smartApi.apiKey,
+            'Authorization': `Bearer ${this.jwtToken}`
+          },
+          timeout: 7000
+        }
+      );
+
+      return {
+        success: response.data?.status || false,
+        message: response.data?.message || 'SUCCESS',
+        data: response.data?.data || []
+      };
+    } catch (err) {
+      console.error('[SmartAPI] getHoldings error:', err.message);
+      return { success: false, error: err.message, data: [] };
+    }
+  }
+
+  /**
+   * Converts a position product type (e.g. DELIVERY <-> INTRADAY, CARRYFORWARD <-> INTRADAY)
+   * Endpoint: /rest/secure/angelbroking/order/v1/convertPosition
+   */
+  async convertPosition(params) {
+    await this.ensureAuthenticated();
+    if (!this.jwtToken) throw new Error('[SmartAPI] Active broker session missing');
+
+    const publicIp = await this.getOutboundIp();
+    const payload = {
+      exchange: params.exchange || 'NSE',
+      symboltoken: params.symboltoken,
+      oldproducttype: params.oldproducttype,
+      newproducttype: params.newproducttype,
+      tradingsymbol: params.tradingsymbol,
+      symbolname: params.symbolname || params.tradingsymbol,
+      instrumenttype: params.instrumenttype || '',
+      priceden: (params.priceden || '1').toString(),
+      pricenum: (params.pricenum || '1').toString(),
+      genden: (params.genden || '1').toString(),
+      gennum: (params.gennum || '1').toString(),
+      precision: (params.precision || '2').toString(),
+      multiplier: (params.multiplier || '-1').toString(),
+      boardlotsize: (params.boardlotsize || '1').toString(),
+      buyqty: (params.buyqty || 0).toString(),
+      sellqty: (params.sellqty || 0).toString(),
+      buyamount: (params.buyamount || '0').toString(),
+      sellamount: (params.sellamount || '0').toString(),
+      transactiontype: params.transactiontype || 'BUY',
+      quantity: parseInt(params.quantity, 10),
+      type: params.type || 'DAY'
+    };
+
+    const response = await axios.post(
+      `${this.baseUrl}/rest/secure/angelbroking/order/v1/convertPosition`,
+      payload,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-UserType': 'USER',
+          'X-SourceID': 'WEB',
+          'X-ClientLocalIP': '127.0.0.1',
+          'X-ClientPublicIP': publicIp,
+          'X-PrivateKey': config.smartApi.apiKey,
+          'Authorization': `Bearer ${this.jwtToken}`
+        },
+        timeout: 8000
+      }
+    );
+
+    return {
+      success: response.data?.status || false,
+      message: response.data?.message || 'SUCCESS',
+      data: response.data
+    };
+  }
 }
 
 export const smartApiClient = new SmartApiClient();

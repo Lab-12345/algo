@@ -13,6 +13,7 @@ import strategyRoutes from './routes/strategyRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import tradeRoutes from './routes/tradeRoutes.js';
 import systemRoutes from './routes/systemRoutes.js';
+import portfolioRoutes from './routes/portfolioRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,6 +55,7 @@ app.use('/api', orderRoutes);
 app.use('/api/trades', tradeRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api/trading', systemRoutes); // For /api/trading/kill-switch
+app.use('/api/portfolio', portfolioRoutes);
 
 // Serve client build if available (production VPS deployment)
 const clientBuildPath = path.resolve(__dirname, '../../client/dist');

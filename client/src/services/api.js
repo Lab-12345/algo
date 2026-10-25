@@ -157,5 +157,45 @@ export const api = {
     } catch (e) {
       return { success: false, data: [], metrics: {} };
     }
+  },
+
+  // Angel One Portfolio & Holdings
+  async getHoldings() {
+    try {
+      const res = await fetch(`${BASE_URL}/portfolio/holdings`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      return {
+        success: false,
+        data: {
+          holdings: [],
+          totalholding: { totalholdingvalue: 0, totalinvvalue: 0, totalprofitandloss: 0, totalpnlpercentage: 0 }
+        }
+      };
+    }
+  },
+
+  async convertPosition(params) {
+    try {
+      const res = await fetch(`${BASE_URL}/portfolio/convert-position`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
+      return await res.json();
+    } catch (e) {
+      return { success: false, message: e.message };
+    }
+  },
+
+  async getBrokerPositions() {
+    try {
+      const res = await fetch(`${BASE_URL}/portfolio/positions`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      return { success: false, data: [] };
+    }
   }
 };
