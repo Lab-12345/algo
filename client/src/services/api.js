@@ -1,4 +1,7 @@
-const RAW_URL = import.meta.env.VITE_API_URL || '';
+// On HTTPS pages (e.g. Cloudflare Workers https://algo.klaba8086.workers.dev),
+// always route via same-origin relative '/api' proxy to eliminate browser Mixed Content blocks.
+const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+const RAW_URL = (!isHttps && import.meta.env.VITE_API_URL) ? import.meta.env.VITE_API_URL : '';
 const BASE_URL = RAW_URL ? `${RAW_URL.replace(/\/$/, '')}/api` : '/api';
 
 export const api = {
