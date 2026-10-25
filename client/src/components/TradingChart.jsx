@@ -1,24 +1,35 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // Sample base historical price data generator for realistic index price action
-function generateCandles(symbol, count = 40, basePrice = 24500) {
+function generateCandles(symbol, count = 40, basePrice = 22600) {
   const candles = [];
-  let price = basePrice;
+  let price = basePrice - 95;
   const now = Date.now();
   const interval = 5 * 60 * 1000;
 
-  for (let i = count; i >= 0; i--) {
+  for (let i = count; i >= 1; i--) {
     const time = new Date(now - i * interval);
-    const change = (Math.random() - 0.48) * 35;
+    const change = (Math.random() - 0.48) * 28;
     const open = parseFloat(price.toFixed(2));
     const close = parseFloat((open + change).toFixed(2));
-    const high = parseFloat((Math.max(open, close) + Math.random() * 20).toFixed(2));
-    const low = parseFloat((Math.min(open, close) - Math.random() * 20).toFixed(2));
+    const high = parseFloat((Math.max(open, close) + Math.random() * 15).toFixed(2));
+    const low = parseFloat((Math.min(open, close) - Math.random() * 15).toFixed(2));
     const volume = Math.floor(Math.random() * 45000 + 15000);
 
     candles.push({ time, open, high, low, close, volume });
     price = close;
   }
+
+  // Exact Friday close candle at 22,600.00
+  candles.push({
+    time: new Date(now),
+    open: parseFloat((basePrice - 18.40).toFixed(2)),
+    high: parseFloat((basePrice + 12.10).toFixed(2)),
+    low: parseFloat((basePrice - 26.50).toFixed(2)),
+    close: parseFloat(basePrice.toFixed(2)),
+    volume: 58240
+  });
+
   return candles;
 }
 
@@ -38,7 +49,7 @@ export function TradingChart({ activeSymbol = 'NIFTY' }) {
   const [timeframe, setTimeframe] = useState('5m');
   const marketOpen = isMarketOpen();
   const [candles, setCandles] = useState(() =>
-    generateCandles(activeSymbol, 45, activeSymbol === 'BANKNIFTY' ? 51258.80 : 24852.15)
+    generateCandles(activeSymbol, 45, activeSymbol === 'BANKNIFTY' ? 51258.80 : 22600.00)
   );
   const [indicators, setIndicators] = useState({ vwap: true, ema20: true });
   const [hoveredCandle, setHoveredCandle] = useState(null);
@@ -46,7 +57,7 @@ export function TradingChart({ activeSymbol = 'NIFTY' }) {
 
   // Switch symbol
   useEffect(() => {
-    const base = symbol === 'BANKNIFTY' ? 51258.80 : symbol === 'FINNIFTY' ? 23912.45 : 24852.15;
+    const base = symbol === 'BANKNIFTY' ? 51258.80 : symbol === 'FINNIFTY' ? 23912.45 : 22600.00;
     setCandles(generateCandles(symbol, 45, base));
   }, [symbol, timeframe]);
 

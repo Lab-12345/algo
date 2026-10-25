@@ -41,7 +41,7 @@ function getMarketStatus() {
 export function ManualOrderTerminal({ onOrderPlaced }) {
   const [symbol, setSymbol] = useState('NIFTY');
   const [optionType, setOptionType] = useState('CE');
-  const [strike, setStrike] = useState(24500);
+  const [strike, setStrike] = useState(22600);
   const [lots, setLots] = useState(1);
   const [price, setPrice] = useState(145.50);
   const [stopLoss, setStopLoss] = useState(25);
@@ -59,7 +59,7 @@ export function ManualOrderTerminal({ onOrderPlaced }) {
   const fullSymbol = `${symbol}24OCT${strike}${optionType}`;
 
   const handleQuickStrike = (offset) => {
-    const base = symbol === 'BANKNIFTY' ? 51200 : 24500;
+    const base = symbol === 'BANKNIFTY' ? 51200 : symbol === 'FINNIFTY' ? 23900 : 22600;
     const step = symbol === 'BANKNIFTY' ? 100 : 50;
     setStrike(base + offset * step);
   };
@@ -173,8 +173,9 @@ export function ManualOrderTerminal({ onOrderPlaced }) {
             <select
               value={symbol}
               onChange={(e) => {
-                setSymbol(e.target.value);
-                setStrike(e.target.value === 'BANKNIFTY' ? 51200 : 24500);
+                const val = e.target.value;
+                setSymbol(val);
+                setStrike(val === 'BANKNIFTY' ? 51200 : val === 'FINNIFTY' ? 23900 : 22600);
               }}
               style={{
                 width: '100%',
