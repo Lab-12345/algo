@@ -1,0 +1,41 @@
+# =========================================================================
+# Koyeb Application & Service Configuration
+# =========================================================================
+name: tradepilot
+services:
+  - name: tradepilot-server
+    type: web
+    docker:
+      dockerfile: Dockerfile
+    regions:
+      - sin # Singapore (Closest free-tier region to India/NSE latency)
+    instance_type: nano
+    routes:
+      - path: /
+        port: 8000
+    ports:
+      - port: 8000
+        protocol: http
+    health_checks:
+      - http:
+          path: /health
+          port: 8000
+        interval: 30
+        timeout: 5
+        unhealthy_threshold: 3
+        healthy_threshold: 2
+    env:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8000"
+      - key: CLIENT_URL
+        value: "*" # Update to your Cloudflare Pages URL (e.g. https://tradepilot.pages.dev)
+      - key: DEFAULT_TRADING_MODE
+        value: PAPER
+      - key: ALLOW_LIVE_TRADING
+        value: "false"
+      - key: ENFORCE_STATIC_IP_CHECK
+        value: "false"
+      # NOTE: Configure sensitive credentials (MONGODB_URI, JWT_SECRET, SMARTAPI_*)
+      # directly in the Koyeb web console under Environment Variables / Secrets!

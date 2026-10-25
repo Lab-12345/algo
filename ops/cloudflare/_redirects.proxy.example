@@ -1,0 +1,11 @@
+# =========================================================================
+# Cloudflare Pages _redirects with Koyeb Backend API Proxy
+# =========================================================================
+# If you want Cloudflare's global edge network to proxy all /api requests
+# directly to your Koyeb backend without triggering browser CORS,
+# replace <your-koyeb-app> with your actual Koyeb subdomain:
+
+/api/*    https://tradepilot-server.koyeb.app/api/:splat    200
+
+# SPA fallback rule for React client-side routing
+/*        /index.html                                       200

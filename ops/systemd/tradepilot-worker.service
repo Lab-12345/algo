@@ -1,0 +1,22 @@
+[Unit]
+Description=TradePilot Persistent Trading Worker Daemon
+After=network.target mongod.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/var/www/tradepilot/worker
+EnvironmentFile=/var/www/tradepilot/.env
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/www/tradepilot/logs/worker-systemd.log
+StandardError=append:/var/www/tradepilot/logs/worker-systemd-err.log
+
+# Resource Limits
+LimitNOFILE=65535
+MemoryMax=800M
+
+[Install]
+WantedBy=multi-user.target

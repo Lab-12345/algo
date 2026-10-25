@@ -1,0 +1,29 @@
+{
+  "name": "tradepilot-root",
+  "version": "1.0.0",
+  "description": "TradePilot: Automated Algorithmic Trading Platform using Angel One SmartAPI",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "server",
+    "worker",
+    "client"
+  ],
+  "scripts": {
+    "start:server": "npm --workspace=server run dev",
+    "start:worker": "npm --workspace=worker run dev",
+    "start:client": "npm --workspace=client run dev",
+    "dev": "npm --workspace=server run dev",
+    "build": "npm --workspace=client run build",
+    "test": "npm --workspace=server test"
+  },
+  "keywords": [
+    "trading",
+    "smartapi",
+    "angel-one",
+    "algo-trading",
+    "mern"
+  ],
+  "author": "TradePilot Developer",
+  "license": "ISC"
+}
